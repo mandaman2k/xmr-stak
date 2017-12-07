@@ -82,7 +82,8 @@ void help()
 	cout<<"  --nvidia FILE         NVIDIA backend miner config file"<<endl;
 #endif
 	cout<<" "<<endl;
-	cout<<"The Following options temporary overwrites the config entries of \nthe pool with the highest weight:"<<endl;
+	cout<<"The following options can be used for automatic start without a guided config,"<<endl;
+	cout<<"If config exists then this pool will be top priority."<<endl;
 	cout<<"  -o, --url URL         pool url and port, e.g. pool.usxmrpool.com:3333"<<endl;
 	cout<<"  -O, --tls-url URL     TLS pool url and port, e.g. pool.usxmrpool.com:10443"<<endl;
 	cout<<"  -u, --user USERNAME   pool user name or wallet address"<<endl;
@@ -169,7 +170,7 @@ inline void prompt_once(bool& prompted)
 	}
 }
 
-void do_guided_config(bool userSetPasswd)
+void do_guided_config()
 {
 	using namespace xmrstak;
 
@@ -226,7 +227,7 @@ void do_guided_config(bool userSetPasswd)
 	}
 
 	auto& passwd = params::inst().poolPasswd;
-	if(passwd.empty() && (!userSetPasswd))
+	if(passwd.empty() && !params::inst().userSetPwd)
 	{
 		prompt_once(prompted);
 
@@ -335,7 +336,6 @@ int main(int argc, char *argv[])
 		params::inst().executablePrefix += seperator;
 	}
 
-	bool userSetPasswd = false;
 	for(int i = 1; i < argc; ++i)
 	{
 		std::string opName(argv[i]);
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
 				win_exit();
 				return 1;
 			}
-			userSetPasswd = true;
+			params::inst().userSetPwd = true;
 			params::inst().poolPasswd = argv[i];
 		}
 		else if(opName.compare("-c") == 0 || opName.compare("--config") == 0)
@@ -481,7 +481,7 @@ int main(int argc, char *argv[])
 
 	// check if we need a guided start
 	if(!configEditor::file_exist(params::inst().configFile))
-		do_guided_config(userSetPasswd);
+		do_guided_config();
 
 	if(!jconf::inst()->parse_config(params::inst().configFile.c_str()))
 	{
